@@ -8,7 +8,7 @@
     "react-scripts": "3.0.1"
   },
   "scripts": {
-    "start-local": "react-scripts start",
+    "dev": "react-scripts start",
     "start": "node server.js",
     "build": "react-scripts build",
     "test": "react-scripts test",
