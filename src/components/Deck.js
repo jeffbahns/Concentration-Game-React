@@ -1,149 +1,102 @@
 import React from 'react';
 
+import Card from './Card';
 
-const Card = (props) => {
-    return (
-        props.card.showing ? (
-            <div style={{ width: '80px', height: '100px', opacity: props.card.solved ? '0.2' : '1' }}>
-                <img
-                    src={props.card.image}
-                    // 
-                    alt="new"
-                    height="100"
-                    width="80"
-                />
-                {/* {props.card.solved ? 'solved' : props.card.value} */}
-            </div>
-        ) : (
-            <div onClick={() => props.showCard(props.i)}
-                style={{ width: '80px', height: '100px' }}
-            >
-                <img
-                    src="https://previews.123rf.com/images/bobyramone/bobyramone1206/bobyramone120600016/14167526-playing-card-back-side-60x90-mm.jpg"
-                    alt="new"
-                    height="100"
-                    width="80"
-                />
-            </div>
-        )
-    );
-}
 
 class Deck extends React.Component {
 
     constructor(props) {
         super(props);
         this.state = {
-            deck: [],
-            showing: []
+            deckID: props.deckID,
+            deck: props.deck,
+            cardsFlipped: [],
+            isFetching: false,
         }
-        
-        // this.newGame();
     }
 
-    newGame = () => {
-        fetch('https://deckofcardsapi.com/api/deck/new/shuffle/?deck_count=1')
-            .then(res => res.json())
-            .then(json => {
-                this.setState({
-                    deckID: json.deck_id
-                }, this.buildDeck);
-            });
+    // checks for a game over scenario, when all cards in the deck have a solved state
+    checkIfGameOver = () => {
+        let deck = this.state.deck.filter(card => !card.solved);
+        if (deck.length === 0) {
+            this.props.gameOver();
+        }
     }
 
-    buildDeck = () => {
-        console.log(this.state.deckID + ' building deck!');
-        let url = `https://deckofcardsapi.com/api/deck/${this.state.deckID}/draw/?count=52`;
-        console.log(url);
-        fetch(url)
-            .then(res => res.json())
-            .then(json => {
-
-                if (json.success) {
-                    this.setState({ deck: json.cards })
-                }
-            });
-    }
-
-    getCard = (i) => {
-
-    }
-
+    // checks if cards are matched, then sends them to either a solved state or flips back over again
     checkIfMatch = () => {
-        let showing = JSON.parse(JSON.stringify(this.state.showing));
-        if (showing.length === 2) {
-            let deck = JSON.parse(JSON.stringify(this.state.deck));
+        let cardsFlipped = JSON.parse(JSON.stringify(this.state.cardsFlipped));
+        if (cardsFlipped.length !== 2) { return; }
 
-            if (deck[showing[0]].value === deck[showing[1]].value) {
-                deck[showing[0]].solved = true;
-                deck[showing[1]].solved = true;
-            } else {
-                deck[showing[0]].showing = false;
-                deck[showing[1]].showing = false;
-            }
-            showing = [];
-            this.setState({ deck, showing });
+        let deck = JSON.parse(JSON.stringify(this.state.deck));
 
+        let card1 = deck[cardsFlipped[0]];
+        let card2 = deck[cardsFlipped[1]];
+
+        if (card1.value === card2.value) { // match success
+            card1.solved = true;
+            card2.solved = true;
+
+        } else { // no match, flip em back over
+            card1.flipped = false;
+            card2.flipped = false;
         }
+        cardsFlipped = [];
 
+        // timeout so user can check cards before they are flipped back
+        setTimeout(() => {
+            this.setState({ deck, cardsFlipped }, this.checkIfGameOver);
+        }, card1.solved ? 300 : 1500);
     }
 
-    showCard = (i) => {
-        if (this.state.showing.length >= 2) { return; }
-        let deck = JSON.parse(JSON.stringify(this.state.deck));
-        deck[i].showing = true;
+    // click handler for all cards on screen
+    cardClicked = (cardIndex) => {
+        // dont let user flip more than two cards at a time
+        if (this.state.cardsFlipped.length >= 2) { return; }
 
-        let showing = JSON.parse(JSON.stringify(this.state.showing));
-        if (showing.length < 2) {
-            showing.push(i);
+        let deck = JSON.parse(JSON.stringify(this.state.deck));
+        deck[cardIndex].flipped = true;
+
+        let cardsFlipped = JSON.parse(JSON.stringify(this.state.cardsFlipped));
+        if (cardsFlipped.length < 2) {
+            cardsFlipped.push(cardIndex);
         }
 
-        this.setState({ deck, showing }, () => {
-            if (showing.length === 2) {
-                setTimeout(() => {
-                    this.checkIfMatch();
-                }, 2000);
-            }
+        // after card flipped, check if there is a match with another
+        this.setState({ deck, cardsFlipped }, this.checkIfMatch);
+    }
 
+    // ugly but functional solution for creating a deck
+    // basically a double nested map that creates a grid
+    renderDeck = () => {
+        return Array(4).fill(0).map((e, i) => {
+            return (
+                <div key={`row ${i}`} className="row card-row">
+                    {Array(13).fill(0).map((e2, j) => {
+                        let card = this.state.deck[i * 13 + j];
+                        return (
+                            <div key={card.code} className="col">
+                                <Card
+                                    i={i * 13 + j}
+                                    card={card}
+                                    showCard={this.cardClicked}
+                                />
+                            </div>
+                        );
+                    })}
+                </div>
+            );
         });
-
     }
 
     render() {
-        let deck = '';
-        if (this.state.deck.length === 52) {
-            deck = Array(4).fill(0).map((e, i) => {
-                return (
-                    <div className="row">
-                        {Array(13).fill(0).map((e2, i2) => {
-                            return (
-                                <div className="col">
-                                    <Card
-                                        i={i * 13 + i2}
-                                        card={this.state.deck[i * 13 + i2]}
-                                        getCard={this.getCard}
-                                        showCard={this.showCard}
-                                    />
-
-                                    {/* {i} - {i2} */}
-                                    {/* {i*13  + i2} - */}
-                                    {/* {this.state.deck[i*13 + i2] ? this.state.deck[i*13+i2].value : ''} */}
-                                    {/* {this.state.deck[i*13 + i2] ? this.state.deck[i*13+i2].suit : ''} */}
-                                </div>
-                            );
-                        })}
-                    </div>
-                );
-            });
-        }
-
         return (
-            <div>
-                {deck}
-                {/* <div>{this.state.showing}</div> */}
+            <div id="deck">
+                {this.renderDeck()}
             </div>
         );
     }
+
 }
 
 export default Deck;
