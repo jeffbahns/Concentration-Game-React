@@ -1,7 +1,5 @@
 import React from 'react';
-
 import Card from './Card';
-
 
 class Deck extends React.Component {
 

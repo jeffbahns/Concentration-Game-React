@@ -9,24 +9,27 @@ class Game extends React.Component {
         this.state = {
             deckID: null,
             deck: null,
-            // gameOver: null,
-            gameOver: true,
+            gameOver: null,
             isFetching: false,
         }
     }
 
+    // runs after button clicked, grabs a new deckID and adjusts state, then calls the drawDeck()
     newGame = () => {
         fetch('https://deckofcardsapi.com/api/deck/new/shuffle/?deck_count=1')
             .then(res => res.json())
             .then(json => {
-                this.setState({
-                    deckID: json.deck_id,
-                    gameOver: false,
-                    isFetching: true
-                }, this.drawDeck);
+                if (json.success) {
+                    this.setState({
+                        deckID: json.deck_id,
+                        gameOver: false,
+                        isFetching: true
+                    }, this.drawDeck);
+                }
             });
     }
 
+    // draws a deck from the API based on a deckID
     drawDeck = () => {
         fetch(`https://deckofcardsapi.com/api/deck/${this.state.deckID}/draw/?count=52`)
             .then(res => res.json())
@@ -40,10 +43,12 @@ class Game extends React.Component {
             });
     }
 
+    // called from deck, just flips the state to true
     gameOver = () => {
         this.setState({ gameOver: true });
     }
 
+    // determines if the deck should be shown on screen 
     showDeck = () => {
         return this.state.deck && !this.state.isFetching && !this.state.gameOver;
     }
