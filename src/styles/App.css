@@ -1,0 +1,52 @@
+.App {
+  text-align: center;
+  height: 100vh;
+  overflow: hidden;
+  background-color: #EEEEEE;
+}
+
+.App-logo {
+  animation: App-logo-spin infinite 20s linear;
+  height: 40vmin;
+  pointer-events: none;
+}
+
+.App-header {
+  background-color: #282c34;
+  min-height: 10vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  font-size: calc(10px + 2vmin);
+  color: white;
+}
+
+#game-header {
+  font-size: 30px;
+  color: white;
+  background-color: #767676;
+}
+
+#game-over {
+  font-size: 100px;
+  margin-top: 100px;
+}
+
+#deck {
+  margin-top: 20px;
+}
+
+#new-game {
+  color: white;
+  background-color: #5B5B5B;
+  border: none;
+  border-radius: 5px;
+  font-size: 25px;
+}
+
+.card {
+  width: 80px;
+  height: 120px;
+  margin-top: 25px;
+}
